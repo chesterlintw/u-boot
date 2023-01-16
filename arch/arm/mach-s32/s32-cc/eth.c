@@ -204,7 +204,7 @@ void setup_iomux_enet_gmac(struct udevice *dev, int intf)
 		break;
 
 	case PHY_INTERFACE_MODE_RGMII:
-		pinctrl_select_state(dev, "gmac_rgmii");
+		pinctrl_select_state(dev, "default");
 		break;
 
 	case PHY_INTERFACE_MODE_RMII:
