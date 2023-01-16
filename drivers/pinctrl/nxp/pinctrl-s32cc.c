@@ -89,10 +89,25 @@ static struct s32_range *s32_get_pin_range(struct s32_pinctrl *ctlr, u32 pin)
 	return NULL;
 }
 
+/* Set the reserved elements as -1 */
+static const int support_slew[] = {208, -1, -1, -1, 166, 150, 133, 83};
+
+static int s32_get_slew_regval(int arg) {
+	int i;
+	/* Translate a real slew rate (MHz) to a register value */
+	for (i = 0; i < ARRAY_SIZE(support_slew); i++) {
+		if (arg == support_slew[i])
+			return i;
+	}
+
+	return -EINVAL;
+}
+
 static int s32_get_mscr_setting_from_param(unsigned int param,
 					   unsigned int argument,
 					   u32 *mscr_value)
 {
+	int ret;
 	enum pin_config_param cfg = (enum pin_config_param)param;
 
 	switch (cfg) {
@@ -113,10 +128,13 @@ static int s32_get_mscr_setting_from_param(unsigned int param,
 		*mscr_value &= ~SIUL2_MSCR_ODE;
 		break;
 	case PIN_CONFIG_SLEW_RATE:
-		argument = (argument << SIUL2_MSCR_SRE_SHIFT) &
+		ret = s32_get_slew_regval(argument);
+		if (ret < 0)
+			return ret;
+		ret = (ret << SIUL2_MSCR_SRE_SHIFT) &
 			   SIUL2_MSCR_SRE_MASK;
 		*mscr_value &= ~SIUL2_MSCR_SRE_MASK;
-		*mscr_value |= argument;
+		*mscr_value |= (unsigned int)ret;
 		break;
 	case PIN_CONFIG_BIAS_PULL_UP:
 		*mscr_value |= SIUL2_MSCR_PUE | SIUL2_MSCR_PUS;
